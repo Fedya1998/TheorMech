@@ -58,7 +58,7 @@ def show(impact_parameter, speed=15):
     signal.signal(signal.SIGSYS, signal.SIG_IGN)
     signal.pthread_sigmask(signal.SIG_SETMASK, [signal.SIGUSR1, signal.SIGUSR2, signal.SIGSYS])
 
-    bg_path = "/home/fedya/bg/stock-photo.jpg"
+    bg_path = "images/stock-photo.jpg"
     background_image = sf.Texture.from_file(bg_path)
     window = sf.RenderWindow(sf.VideoMode(1920, 1080), "A Swagabitch game")
 
