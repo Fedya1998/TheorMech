@@ -3,7 +3,8 @@ from sfml import sf
 from scipy import optimize
 import numpy as np
 import math
-import os, signal
+import os
+import signal
 
 
 zhopa = 0
@@ -49,7 +50,7 @@ def function_to_minimize(impact_parameter):
 def test(impact_parameter, speed, delta=0.1):
     signal.signal(signal.SIGUSR1, handler)
     signal.signal(signal.SIGUSR2, handler)
-    r_min = optimize.brute(function_to_minimize, (slice(impact_parameter - delta, impact_parameter + delta, 1e-4),))
+    r_min = optimize.brute(function_to_minimize, (slice(impact_parameter - delta, impact_parameter + delta, 1e-3),))
     print("r min ", r_min, "F ", function_to_minimize(r_min))
     return r_min
 

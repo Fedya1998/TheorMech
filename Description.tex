@@ -1,0 +1,46 @@
+\documentclass[a4paper,12pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[english]{babel}  
+\usepackage{amsmath,amsfonts,amssymb,amsthm,mathtools} 
+\usepackage{wasysym}
+\author{Fedor Chuprakov}
+\title{Behaviour of pitiable rocket flying near to the Earth}
+\date{\today}
+
+
+\begin{document}
+\maketitle
+\newpage
+\subsection*{Abstract}
+Nowadays many people know that if one jumps thoughtlesly high, he can get a bump
+. But they all have never thought that tiny rockets feel the same! Imagine that
+you're a tiny ricket and you want to change your direction using our planet.
+Everything goes well until you meet our skrewdy atmosphere: it slows you down and you fall and explode! That's a pity. In this work we will discuss what tiny rockets can do in such situations.
+\subsection*{Introduction}
+The process of turning around our rocket is explored in this research.
+The theoretical model includes \textbf{Newton's law of universal gravitation
+} and \textbf{Barometric formula}. This is enough because other things are left as self-evident. This was implemented in \textbf{Python} program which calculates what would happen under initial conditions like coordinate, velocity and impact parameter.
+\subsection*{Theoretical model}
+As it was already mentioned, was used \textbf{Newton's law of universal gravitation}:
+
+\begin{equation}\label{Newton}
+	\textbf{F}=G\cdot \frac{m_1\cdot m_2}{r^3} \cdot \textbf{r}
+\end{equation}
+Where \textit{$F$} is Newton force, \textit{$m_1$} is the rocket mass, \textit{$m_2$} is the Earth mass and \textit{$r$} is a distance between the rocket and the Earth.\\
+And \textbf{Barometric formula}:
+\begin{equation}\label{Barometric}
+	\rho = \rho_0 \cdot exp \left[ \frac{-g \cdot m \cdot H}{k \cdot T} \right]
+\end{equation}
+Where \textit{$\rho$} is the density of atmosphere, \textit{$\rho_0$} is the density near the surface, \textit{$g$} is the gravitational acceleration, \textit{$m$} is mass of an air molecule, \textit{$H$} is the height above the Earth, k is Boltzmann constant and \textit{$T$} is temperature.\\
+Also the \textbf{friction force} acts upon the rocket:
+\begin{equation}\label{Resistance}
+	\textbf{F} = -\frac{1}{2} \cdot c \cdot S \cdot v^2 \cdot \frac{\textbf{v}}{v}
+\end{equation}
+Where \textit{$F$} is the friction force, \textit{$c$} is the drag coefficient, \textit{$S$} is the effective square \textit{$v$} is the velocity of the rocket.
+
+\subsection*{Methods}
+
+\subsection*{Results}
+\subsection*{Conclusion}
+
+\end{document}

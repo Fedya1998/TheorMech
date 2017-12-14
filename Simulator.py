@@ -24,6 +24,10 @@ def failure():
     os.kill(os.getpid(), signal.SIGUSR1)
 
 
+def success():
+    os.kill(os.getpid(), signal.SIGUSR2)
+
+
 class PhysicalBody(object):
     __mass = PLANET_MASS
     __coord = PLANET_COORD
@@ -121,13 +125,10 @@ class Simulator:
             failure()
         elif height > self.__old_height:
             self.__trust_me += 1
-            if self.__trust_me == 10:
-                os.kill(os.getpid(), signal.SIGUSR2)
-            # print("\n\n---------------------------------------\n\n")
-            # print(self)
-            self.__old_height = 1e10
-        self.__old_height = height
+            if self.__trust_me == 10:               # The rocket is definitely retiring
+                success()
 
+        self.__old_height = height
         self.__coord += self.__velocity * dt * GAME_SPEED
         for i in [0, 1]:
             if self.__velocity[i] and self.__acceleration[i] / self.__velocity[i] < -1e3:
