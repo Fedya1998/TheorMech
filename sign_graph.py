@@ -1,9 +1,6 @@
 import Simulator
 from sfml import sf
 from scipy import optimize
-import numpy as np
-import math
-import os
 import signal
 
 
