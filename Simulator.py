@@ -64,7 +64,7 @@ class Simulator:
         self.__texture = sf.Texture
         self.__sprite = sf.Sprite
         self.__radius = 0.5
-        self.__max_density = 1.2041
+        self.__max_density = 1.2041                     # Change it to 0 if you don't give a damn about the atmosphere
         self.__forces = list()
         self.__old_height = 1e10
         self.__trust_me = 0
