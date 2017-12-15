@@ -38,7 +38,6 @@ class PhysicalBody(object):
         self.__texture = sf.Texture.from_file(image_path)
         self.__sprite = sf.Sprite(self.__texture)
         self.__sprite.origin = self.__radius / METERS_PER_PIXEL, self.__radius / METERS_PER_PIXEL
-        print(self.__sprite.origin)
 
     def draw(self, window):
         self.__sprite.position = self.__coord
@@ -55,20 +54,6 @@ class PhysicalBody(object):
 
 
 class Simulator:
-    __mass = 1e4
-    __velocity = np.array((0., 0.))
-    __coord = np.array((700., 700.))
-    __acceleration = np.array((0., 0.))
-    __resistance_coef = 0.2
-    __super_square = 1.
-    __texture = sf.Texture
-    __sprite = sf.Sprite
-    __radius = 0.5
-    __max_density = 1.2041
-    __forces = []
-    __old_height = 1e10
-    __trust_me = 0
-
     def __init__(self, image_path, impact_parameter, speed):
         self.__mass = 1e4
         self.__velocity = np.array((0., 0.))
@@ -82,18 +67,10 @@ class Simulator:
         self.__max_density = 1.2041
         self.__forces = list()
         self.__old_height = 1e10
+        self.__trust_me = 0
+        self.__already_sent_signal = False
 
-        coord_relative = PLANET_COORD - self.__coord
-        hypotenuse = np.linalg.norm(coord_relative) * METERS_PER_PIXEL
-        # print("hypotenuse ", hypotenuse / METERS_PER_PIXEL)
-        impact_parameter_in_pixels = float(impact_parameter) * PLANET_RADIUS / METERS_PER_PIXEL
-        # print("impact parameter in pixels ", impact_parameter_in_pixels)
-        alpha = self.__angle(np.array((1., 0)), coord_relative)
-        # print("alpha ", alpha)
-        gamma = np.arcsin(impact_parameter_in_pixels / hypotenuse * METERS_PER_PIXEL)
-        # print("gamma ", gamma)
-        phi = gamma + alpha
-        # print("phi ", phi)
+        phi = self.__calc_angle_by_impact_par(impact_parameter)
         self.__velocity = np.array((np.cos(phi), np.sin(phi))) * speed
         self.__texture = sf.Texture.from_file(image_path)
         self.__sprite = sf.Sprite(self.__texture)
@@ -109,6 +86,14 @@ class Simulator:
                 dump += str(attr[0]) + " = " + str(attr[1]) + '\n'
         return dump + '\n'
 
+    def __calc_angle_by_impact_par(self, impact_parameter):
+        coord_relative = PLANET_COORD - self.__coord
+        hypotenuse = np.linalg.norm(coord_relative) * METERS_PER_PIXEL
+        impact_parameter_in_pixels = float(impact_parameter) * PLANET_RADIUS / METERS_PER_PIXEL
+        alpha = self.__angle(np.array((1., 0)), coord_relative)
+        gamma = np.arcsin(impact_parameter_in_pixels / hypotenuse * METERS_PER_PIXEL)
+        return gamma + alpha
+
     @staticmethod
     def __angle(v1, v2):
         v1_normed = v1 / np.linalg.norm(v1)
@@ -119,13 +104,14 @@ class Simulator:
 
     def move(self, dt):
         height = self.__calc_height()
-        # print("height ", height)
-        if height < 0:
+        if height < 0 and not self.__already_sent_signal:
             failure()
-        elif height > self.__old_height:
+            self.__already_sent_signal = True
+        elif height > self.__old_height and not self.__already_sent_signal:
             self.__trust_me += 1
-            if self.__trust_me == 10:               # The rocket is definitely retiring
+            if self.__trust_me == 10:                                           # The rocket is definitely retiring
                 success()
+                self.__already_sent_signal = True
 
         self.__old_height = height
         self.__coord += self.__velocity * dt * GAME_SPEED
@@ -144,6 +130,7 @@ class Simulator:
                 self.__sprite.rotation = self.__angle(np.array((1., 0.)), self.__velocity) * 180 / math.pi + 45
         window.draw(self.__sprite)
 
+    # Calculates the height above the Earth
     def __calc_height(self):
         height = np.linalg.norm(self.__coord - PLANET_COORD) * METERS_PER_PIXEL - PLANET_RADIUS
         return height
@@ -163,12 +150,14 @@ class Simulator:
                                * (self.__coord - PLANET_COORD) * METERS_PER_PIXEL)
         return gravitation
 
+    # a = F / m as Newton said one day
     def physics(self):
         f = np.array((0., 0.))
         for force in self.__forces:
             f += force()
         self.__acceleration = f / self.__mass
 
+    # rho = rho_0 * exp(-m * g * H / k / T)
     def __calc_atm_density(self):
         if self.__max_density == 0:
             return 0
@@ -182,8 +171,8 @@ class Simulator:
                     return 0
                 else:
                     density = self.__max_density * math.exp(-AIR_MASS * self.__calc_g()
-                                                        * self.__calc_height()
-                                                        / k / self.__calc_temp())
+                                                            * self.__calc_height()
+                                                            / k / self.__calc_temp())
                 if density is None:
                     raise ValueError
                 return density
@@ -193,6 +182,7 @@ class Simulator:
     def __calc_g(self):
         return g_max * (PLANET_RADIUS / np.linalg.norm((self.__coord - PLANET_COORD) * METERS_PER_PIXEL)) ** 2
 
+    # Oh man WTF is written below
     def __calc_temp(self):
         height = self.__calc_height()
         if height < 11e3:
@@ -214,11 +204,9 @@ class Simulator:
             temp = -83.
 
         elif height < 18e4:
-            # print("Почему так высоко, брат?\n")
             temp = (100. - 123) / (18e4 - 85e3) * (height - 85e3)
 
         else:
-            # print("Oh maaan\n")
             temp = 1e3
 
         return temp + 273.

@@ -4,7 +4,7 @@ from scipy import optimize
 import signal
 
 
-zhopa = 0
+zhopa = 0                                           # A global variable to use in signal handlers and cycles
 
 
 def handler(sig, frame):
@@ -19,6 +19,7 @@ def handler(sig, frame):
         return
 
 
+# Checks if the initial speed and impact parameter allows the rocket to fly happily
 def check(impact_parameter, speed=15):
     # print("check impact ", impact_parameter)
     global zhopa
@@ -33,18 +34,16 @@ def check(impact_parameter, speed=15):
 
 
 def function_to_minimize(impact_parameter):
-    # print("impact parameter ", impact_parameter)
     if impact_parameter < 0:
-        return 100
-    if check(impact_parameter) == 2:
-        # print("return ", impact_parameter)
-        return impact_parameter
-    else:
-        # print("return 100")
+        return 100                                           # 100 is definitely bigger than the impact parameter
+    if check(impact_parameter) == 2:                # Everything is OK, we can fly happily
+        return impact_parameter                              # It is very convenient to return the parameter itself
+    else:                                                    # because we need to minimize it
         return 100
 
 
-def test(impact_parameter, speed, delta=0.1):
+# Finds the optimal impact parameter near the one passed in
+def test(impact_parameter, speed=15, delta=0.1):
     signal.signal(signal.SIGUSR1, handler)
     signal.signal(signal.SIGUSR2, handler)
     r_min = optimize.brute(function_to_minimize, (slice(impact_parameter - delta, impact_parameter + delta, 1e-3),))
@@ -52,10 +51,10 @@ def test(impact_parameter, speed, delta=0.1):
     return r_min
 
 
+# Shows what is going on
 def show(impact_parameter, speed=15):
-    signal.signal(signal.SIGUSR1, signal.SIG_IGN)
-    signal.signal(signal.SIGUSR2, signal.SIG_IGN)
-    signal.signal(signal.SIGSYS, signal.SIG_IGN)
+    signal.signal(signal.SIGUSR1, signal.SIG_IGN)           # We don't care about pending signals
+    signal.signal(signal.SIGUSR2, signal.SIG_IGN)           # We just watch and enjoy
     signal.pthread_sigmask(signal.SIG_SETMASK, [signal.SIGUSR1, signal.SIGUSR2, signal.SIGSYS])
 
     bg_path = "images/stock-photo.jpg"
@@ -65,13 +64,13 @@ def show(impact_parameter, speed=15):
     background_sprite = sf.Sprite(background_image)
     window.draw(background_sprite)
     window.display()
-    window.framerate_limit = 60
+    window.framerate_limit = 60                             # Not to spend 100% processor time
 
     rocket = Simulator.Simulator("images/rocket_tiny.png", impact_parameter, speed)
     our_planet = Simulator.PhysicalBody("images/Earth128.png")
 
     while window.is_open:
-        dt = 1e-3
+        dt = 1e-3                                           # Not that accurate as in test(), but who cares
 
         window.clear()
         if sf.Keyboard.is_key_pressed(sf.Keyboard.ESCAPE):
@@ -81,8 +80,8 @@ def show(impact_parameter, speed=15):
             if not event:
                 break
 
-        print(rocket)
-        print(our_planet)
+        # print(rocket)
+        # print(our_planet)
         window.draw(background_sprite)
         rocket.draw(window)
         our_planet.draw(window)
