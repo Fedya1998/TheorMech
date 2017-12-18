@@ -5,7 +5,7 @@ import signal
 import numpy as np
 
 zhopa = 0                                           # A global variable to use in signal handlers and cycles
-GAME_SPEED = 100
+GAME_SPEED = 10
 
 
 def handler(sig, frame):
@@ -83,13 +83,13 @@ def show(impact_parameter, speed=15):
     background_sprite = sf.Sprite(background_image)
     window.draw(background_sprite)
     window.display()
-    # window.framerate_limit = 60                             # Not to spend 100% processor time
+    window.framerate_limit = 60                            # Not to spend 100% CPU time
 
     rocket = Simulator.Simulator("images/rocket_tiny.png", impact_parameter, speed)
     our_planet = Simulator.PhysicalBody("images/Earth128.png")
 
     while window.is_open:
-        dt = 1e-3                                           # Not that accurate as in test(), but who cares
+        dt = 1e-2                                           # Not that accurate as in test(), but who cares
 
         window.clear()
         if sf.Keyboard.is_key_pressed(sf.Keyboard.ESCAPE):
