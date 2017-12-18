@@ -64,7 +64,7 @@ class Simulator:
         self.__texture = sf.Texture
         self.__sprite = sf.Sprite
         self.__radius = 0.5
-        self.__max_density = 1.2041                     # Change it to 0 if you don't give a damn about the atmosphere
+        self.__max_density = 1.2041 * 0                    # Change it to 0 if you don't give a damn about the atmosphere
         self.__forces = list()
         self.__old_height = 1e10
         self.__trust_me = 0
@@ -109,7 +109,7 @@ class Simulator:
             self.__already_sent_signal = True
         elif height > self.__old_height and not self.__already_sent_signal:
             self.__trust_me += 1
-            if self.__trust_me == 10:                                           # The rocket is definitely retiring
+            if self.__trust_me == 3:                                            # The rocket is definitely retiring
                 success()
                 self.__already_sent_signal = True
 
@@ -155,7 +155,7 @@ class Simulator:
         f = np.array((0., 0.))
         for force in self.__forces:
             f += force()
-        self.__acceleration = f / self.__mass
+        self.__acceleration = f / self.__mass / METERS_PER_PIXEL            # and divide by that to convert to pixels
 
     # rho = rho_0 * exp(-m * g * H / k / T)
     def __calc_atm_density(self):

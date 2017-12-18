@@ -1,7 +1,8 @@
 import sign_graph
 
-# 2.27477783 without atmosphere
-# 2.276 with atmosphere
+# speed = 0.1
+# 1.3947 without atmosphere
+# 1.3962 with atmosphere
 
-r_min = sign_graph.test(2.3)
-# sign_graph.show(2.3, 15)
+# r_min = sign_graph.test(2.3)
+sign_graph.test(1.4, 0.1)

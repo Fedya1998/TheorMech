@@ -2,9 +2,10 @@ import Simulator
 from sfml import sf
 from scipy import optimize
 import signal
-
+import numpy as np
 
 zhopa = 0                                           # A global variable to use in signal handlers and cycles
+GAME_SPEED = 100
 
 
 def handler(sig, frame):
@@ -24,7 +25,7 @@ def check(impact_parameter, speed=15):
     # print("check impact ", impact_parameter)
     global zhopa
     rocket = Simulator.Simulator("images/rocket_tiny.png", impact_parameter, speed)
-    dt = 1e-4
+    dt = 1e-3
 
     zhopa = 0
     while zhopa == 0:
@@ -33,22 +34,40 @@ def check(impact_parameter, speed=15):
     return zhopa
 
 
-def function_to_minimize(impact_parameter):
+def function_to_minimize(impact_parameter, *args):
     if impact_parameter < 0:
         return 100                                           # 100 is definitely bigger than the impact parameter
-    if check(impact_parameter) == 2:                # Everything is OK, we can fly happily
+
+    if check(impact_parameter, args[0]) == 2:                # Everything is OK, we can fly happily
         return impact_parameter                              # It is very convenient to return the parameter itself
+
     else:                                                    # because we need to minimize it
         return 100
 
 
-# Finds the optimal impact parameter near the one passed in
-def test(impact_parameter, speed=15, delta=0.1):
+# Finds the optimal impact parameter near the ones passed in
+def test(impact_parameter, speed=1, tol=1e-4):
     signal.signal(signal.SIGUSR1, handler)
     signal.signal(signal.SIGUSR2, handler)
-    r_min = optimize.brute(function_to_minimize, (slice(impact_parameter - delta, impact_parameter + delta, 1e-3),))
-    print("r min ", r_min, "F ", function_to_minimize(r_min))
-    return r_min
+    par = impact_parameter
+    optimal = [par, 100]
+    if function_to_minimize(par, speed) == par:
+        while True:
+            if function_to_minimize(par, speed) < optimal[1]:
+                optimal[0] = par
+                par -= tol
+            else:
+                break
+    else:
+        while True:
+            if function_to_minimize(par, speed) < optimal[1]:
+                optimal[0] = par
+                break
+            else:
+                par += tol
+
+    print(optimal[0])
+    return optimal[0]
 
 
 # Shows what is going on
@@ -64,7 +83,7 @@ def show(impact_parameter, speed=15):
     background_sprite = sf.Sprite(background_image)
     window.draw(background_sprite)
     window.display()
-    window.framerate_limit = 60                             # Not to spend 100% processor time
+    # window.framerate_limit = 60                             # Not to spend 100% processor time
 
     rocket = Simulator.Simulator("images/rocket_tiny.png", impact_parameter, speed)
     our_planet = Simulator.PhysicalBody("images/Earth128.png")
@@ -80,13 +99,14 @@ def show(impact_parameter, speed=15):
             if not event:
                 break
 
-        # print(rocket)
-        # print(our_planet)
+        print(rocket)
+        print(our_planet)
         window.draw(background_sprite)
         rocket.draw(window)
         our_planet.draw(window)
-        rocket.physics()
-        rocket.move(dt)
+        for i in range(GAME_SPEED):
+            rocket.physics()
+            rocket.move(dt)
         window.display()
 
 
