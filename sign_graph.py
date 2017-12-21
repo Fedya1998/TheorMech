@@ -3,6 +3,8 @@ from sfml import sf
 from scipy import optimize
 import signal
 import numpy as np
+from matplotlib import pylab as plt
+import functools
 
 zhopa = 0                                           # A global variable to use in signal handlers and cycles
 GAME_SPEED = 10
@@ -21,7 +23,7 @@ def handler(sig, frame):
 
 
 # Checks if the initial speed and impact parameter allows the rocket to fly happily
-def check(impact_parameter, speed=15):
+def check(impact_parameter, speed=0.1):
     # print("check impact ", impact_parameter)
     global zhopa
     rocket = Simulator.Simulator("images/rocket_tiny.png", impact_parameter, speed)
@@ -67,14 +69,17 @@ def test(impact_parameter, speed=1, tol=1e-4):
                 par += tol
 
     print(optimal[0])
+    signal.signal(signal.SIGUSR1, signal.SIG_DFL)
+    signal.signal(signal.SIGUSR2, signal.SIG_DFL)
+
     return optimal[0]
 
 
 # Shows what is going on
-def show(impact_parameter, speed=15):
+def show(impact_parameter, speed=0.1):
     signal.signal(signal.SIGUSR1, signal.SIG_IGN)           # We don't care about pending signals
     signal.signal(signal.SIGUSR2, signal.SIG_IGN)           # We just watch and enjoy
-    signal.pthread_sigmask(signal.SIG_SETMASK, [signal.SIGUSR1, signal.SIGUSR2, signal.SIGSYS])
+    signal.pthread_sigmask(signal.SIG_SETMASK, [signal.SIGUSR1, signal.SIGUSR2])
 
     bg_path = "images/stock-photo.jpg"
     background_image = sf.Texture.from_file(bg_path)
@@ -99,8 +104,8 @@ def show(impact_parameter, speed=15):
             if not event:
                 break
 
-        print(rocket)
-        print(our_planet)
+        # print(rocket)
+        # print(our_planet)
         window.draw(background_sprite)
         rocket.draw(window)
         our_planet.draw(window)
@@ -108,5 +113,54 @@ def show(impact_parameter, speed=15):
             rocket.physics()
             rocket.move(dt)
         window.display()
+    signal.signal(signal.SIGUSR1, signal.SIG_DFL)
+    signal.signal(signal.SIGUSR2, signal.SIG_DFL)
 
+
+def calc_inflection(impact_parameter, speed):
+    signal.signal(signal.SIGUSR1, handler)           # We don't care only about USR2 (Success signal)
+    signal.signal(signal.SIGUSR2, signal.SIG_IGN)    # We just watch and enjoy
+    signal.pthread_sigmask(signal.SIG_SETMASK, [signal.SIGUSR2])
+
+    rocket = Simulator.Simulator("images/rocket_tiny.png", impact_parameter, speed)
+
+    dt = 1e-3
+    global zhopa
+    zhopa = 0
+    while zhopa == 0:
+        rocket.physics()
+        rocket.move(dt)
+        if rocket.is_far_away_enough():
+            angle = rocket.calc_inflection_angle()
+            break
+    else:
+        angle = -1
+
+    signal.signal(signal.SIGUSR1, signal.SIG_DFL)
+    signal.signal(signal.SIGUSR2, signal.SIG_DFL)
+    # print("angle ", angle)
+    return angle
+
+
+def plot_inflection(impact_parameters=np.linspace(1, 3, num=20), speed=0.1):
+    inflections = list(map(lambda x: calc_inflection(x, speed), impact_parameters))
+    good_dots = [[], []]
+    bad_dots = [[], []]
+    for i in range(len(inflections)):
+        if inflections[i] != -1:
+            good_dots[0].append(impact_parameters[i])
+            good_dots[1].append(inflections[i])
+        else:
+            bad_dots[0].append(impact_parameters[i])
+            bad_dots[1].append(inflections[i])
+    plt.plot(good_dots[0], good_dots[1], 'g-')
+    plt.plot(bad_dots[0], bad_dots[1], 'r-')
+    plt.title("Inflection angle", {'fontsize': 28})
+    plt.xlabel("Impact parameters (in the Earth radiuses)", {'fontsize': 28})
+    plt.ylabel("Angle (radians)", {'fontsize': 28})
+    plt.xticks(size=20)
+    plt.yticks(size=20)
+    plt.grid("on")
+    plt.legend(("We fly happily", "We fall down and explode"), prop={'size': 20})
+    plt.show()
 

@@ -4,7 +4,7 @@ from sfml import sf
 import inspect
 import os
 import signal
-
+from read_only_properties import *
 
 G = 6.67e-11
 PLANET_RADIUS = 6371e3
@@ -27,6 +27,7 @@ def success():
     os.kill(os.getpid(), signal.SIGUSR2)
 
 
+@read_only_properties('__mass', '__coord', '__texture', '__sprite', '__radius')
 class PhysicalBody(object):
     __mass = PLANET_MASS
     __coord = PLANET_COORD
@@ -53,6 +54,8 @@ class PhysicalBody(object):
         return dump + '\n'
 
 
+@read_only_properties('__mass', '__initial_v', '__resistance_coef',
+                      '__super_square', '__texture', '__sprite', '__radius', '__max_density')
 class Simulator:
     def __init__(self, image_path, impact_parameter, speed):
         self.__mass = 1e4
@@ -64,7 +67,7 @@ class Simulator:
         self.__texture = sf.Texture
         self.__sprite = sf.Sprite
         self.__radius = 0.5
-        self.__max_density = 1.2041 * 0                    # Change it to 0 if you don't give a damn about the atmosphere
+        self.__max_density = 1.2041                   # Change this to 0 if you don't give a damn about the atmosphere
         self.__forces = list()
         self.__old_height = 1e10
         self.__trust_me = 0
@@ -72,6 +75,7 @@ class Simulator:
 
         phi = self.__calc_angle_by_impact_par(impact_parameter)
         self.__velocity = np.array((np.cos(phi), np.sin(phi))) * speed
+        self.__initial_v = np.array(self.__velocity)
         self.__texture = sf.Texture.from_file(image_path)
         self.__sprite = sf.Sprite(self.__texture)
         self.__sprite.origin = self.__radius / METERS_PER_PIXEL, self.__radius / METERS_PER_PIXEL
@@ -94,6 +98,12 @@ class Simulator:
         gamma = np.arcsin(impact_parameter_in_pixels / hypotenuse * METERS_PER_PIXEL)
         return gamma + alpha
 
+    def is_far_away_enough(self):
+        if self.__calc_height() > 2.5e7:
+            return True
+        else:
+            return False
+        
     @staticmethod
     def __angle(v1, v2):
         v1_normed = v1 / np.linalg.norm(v1)
@@ -102,6 +112,9 @@ class Simulator:
         cross = np.cross(v1_normed, v2_normed)
         return np.arctan2(cross, dot)
 
+    def calc_inflection_angle(self):
+        return self.__angle(self.__velocity, self.__initial_v)
+    
     def move(self, dt):
         height = self.__calc_height()
         if height < 0 and not self.__already_sent_signal:

@@ -5,4 +5,6 @@ import sign_graph
 # 1.3962 with atmosphere
 
 # r_min = sign_graph.test(2.3)
-sign_graph.show(1.4, 0.1)
+# r_min = sign_graph.show(2.3)
+# sign_graph.show(1, 0.06)
+sign_graph.plot_inflection(speed=0.1)
